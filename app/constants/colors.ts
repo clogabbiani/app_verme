@@ -1,0 +1,15 @@
+export const colors = {
+  primary: '#6C63FF',
+  primaryDark: '#5a52d5',
+  secondary: '#FF6584',
+  magic: '#1A56DB',
+  pokemon: '#F59E0B',
+  bg: '#0f0f1a',
+  card: '#1a1a2e',
+  border: '#2a2a4a',
+  text: '#e2e8f0',
+  muted: '#94a3b8',
+  success: '#22c55e',
+  error: '#ef4444',
+  warning: '#f59e0b',
+};

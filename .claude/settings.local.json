@@ -1,0 +1,10 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(mkdir -p assets)",
+      "Bash(touch assets/icon.png assets/splash.png assets/adaptive-icon.png assets/favicon.png)",
+      "Bash(npm install:*)",
+      "Bash(npx tsc:*)"
+    ]
+  }
+}
