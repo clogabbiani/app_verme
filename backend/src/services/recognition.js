@@ -31,6 +31,7 @@ export async function identifyCard(imageBuffer, tcgHint) {
   const base64Image = imageBuffer.toString('base64');
 
   const identified = await askClaudeToIdentifyCard(base64Image, tcgHint);
+  console.log('[recognition] Claude result:', JSON.stringify(identified));
   if (!identified) return null;
 
   let cardData;
@@ -39,6 +40,7 @@ export async function identifyCard(imageBuffer, tcgHint) {
   } else {
     cardData = await fetchPokemonCard(identified.name, identified.set_name);
   }
+  console.log('[recognition] API lookup result:', cardData ? cardData.name : 'NOT FOUND');
   if (!cardData) return null;
 
   // Upsert into our catalog so the card is available for future requests
@@ -93,7 +95,7 @@ If you cannot identify the card clearly, return: {"recognized": false}`,
       }],
     });
   } catch (err) {
-    console.error('[recognition] Claude API error:', err.message);
+    console.error('[recognition] Claude API error:', err.message, err.status ?? '');
     return null;
   }
 
