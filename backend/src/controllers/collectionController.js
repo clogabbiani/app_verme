@@ -60,11 +60,12 @@ export async function addCard(req, res) {
 
 /**
  * POST /api/collection/scan
- * Body: { image: "<base64 string>" } or multipart image upload.
- * Identifies the card via pHash and optionally adds it to the collection.
+ * Body: { image: "<base64 string>", tcg_hint?: "magic"|"pokemon" }
+ * Identifies the card via Claude Vision, returns { recognized, card?, message? }.
+ * Always responds 200 — the client checks `recognized` to distinguish outcomes.
  */
 export async function scanCard(req, res) {
-  const { image } = req.body;
+  const { image, tcg_hint } = req.body;
   if (!image) return res.status(400).json({ error: 'image field is required (base64)' });
 
   let imageBuffer;
@@ -74,10 +75,19 @@ export async function scanCard(req, res) {
     return res.status(400).json({ error: 'Invalid base64 image' });
   }
 
-  const match = await identifyCard(imageBuffer);
-  if (!match) return res.status(404).json({ error: 'Card not recognized' });
-
-  res.json({ card: match.card, confidence: match.distance });
+  try {
+    const match = await identifyCard(imageBuffer, tcg_hint);
+    if (!match) {
+      return res.json({
+        recognized: false,
+        message: 'Carta non riconosciuta. Prova a migliorare l\'illuminazione o specifica il tipo di TCG.',
+      });
+    }
+    res.json({ recognized: true, card: match.card });
+  } catch (err) {
+    console.error('[scanCard]', err);
+    res.status(500).json({ error: err.message ?? 'Errore durante il riconoscimento' });
+  }
 }
 
 export async function updateCard(req, res) {
