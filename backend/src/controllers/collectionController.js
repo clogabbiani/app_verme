@@ -1,5 +1,4 @@
 import { z } from 'zod';
-import { supabase } from '../services/supabase.js';
 import { identifyCard } from '../services/recognition.js';
 
 const CONDITIONS = ['M', 'NM', 'LP', 'MP', 'HP', 'D'];
@@ -27,7 +26,7 @@ export async function listCollection(req, res) {
   const { tcg, for_trade, page = 1, limit = 20 } = req.query;
   const offset = (Number(page) - 1) * Number(limit);
 
-  let query = supabase
+  let query = req.supabase
     .from('user_cards')
     .select('*, card:cards(*)', { count: 'exact' })
     .eq('user_id', req.user.id)
@@ -39,7 +38,6 @@ export async function listCollection(req, res) {
   const { data, error, count } = await query;
   if (error) return res.status(500).json({ error: error.message });
 
-  // Client-side filter by TCG (join filter on related table)
   const filtered = tcg ? data.filter(uc => uc.card?.tcg === tcg) : data;
   res.json({ data: filtered, total: count, page: Number(page), limit: Number(limit) });
 }
@@ -48,7 +46,7 @@ export async function addCard(req, res) {
   const parsed = addCardSchema.safeParse(req.body);
   if (!parsed.success) return res.status(400).json({ error: parsed.error.flatten() });
 
-  const { data, error } = await supabase
+  const { data, error } = await req.supabase
     .from('user_cards')
     .insert({ ...parsed.data, user_id: req.user.id })
     .select()
@@ -80,7 +78,7 @@ export async function scanCard(req, res) {
     if (!match) {
       return res.json({
         recognized: false,
-        message: 'Carta non riconosciuta. Prova a migliorare l\'illuminazione o specifica il tipo di TCG.',
+        message: "Carta non riconosciuta. Prova a migliorare l'illuminazione o specifica il tipo di TCG.",
       });
     }
     res.json({ recognized: true, card: match.card });
@@ -94,7 +92,7 @@ export async function updateCard(req, res) {
   const parsed = updateCardSchema.safeParse(req.body);
   if (!parsed.success) return res.status(400).json({ error: parsed.error.flatten() });
 
-  const { data: existing } = await supabase
+  const { data: existing } = await req.supabase
     .from('user_cards')
     .select('id')
     .eq('id', req.params.id)
@@ -103,7 +101,7 @@ export async function updateCard(req, res) {
 
   if (!existing) return res.status(404).json({ error: 'Not found' });
 
-  const { data, error } = await supabase
+  const { data, error } = await req.supabase
     .from('user_cards')
     .update(parsed.data)
     .eq('id', req.params.id)
@@ -115,7 +113,7 @@ export async function updateCard(req, res) {
 }
 
 export async function removeCard(req, res) {
-  const { data: existing } = await supabase
+  const { data: existing } = await req.supabase
     .from('user_cards')
     .select('id')
     .eq('id', req.params.id)
@@ -124,7 +122,7 @@ export async function removeCard(req, res) {
 
   if (!existing) return res.status(404).json({ error: 'Not found' });
 
-  const { error } = await supabase.from('user_cards').delete().eq('id', req.params.id);
+  const { error } = await req.supabase.from('user_cards').delete().eq('id', req.params.id);
   if (error) return res.status(500).json({ error: error.message });
   res.status(204).send();
 }
