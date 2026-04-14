@@ -20,6 +20,10 @@ app.use(cors());
 app.use(morgan(process.env.NODE_ENV === 'production' ? 'combined' : 'dev'));
 app.use(express.json({ limit: '10mb' })); // larger limit for base64 images
 
+// Vercel sits behind a proxy — trust the first hop so express-rate-limit
+// can read X-Forwarded-For without throwing ERR_ERL_UNEXPECTED_X_FORWARDED_FOR
+app.set('trust proxy', 1);
+
 const limiter = rateLimit({
   windowMs: 15 * 60 * 1000,
   max: 100,
